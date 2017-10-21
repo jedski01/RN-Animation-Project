@@ -1,14 +1,17 @@
 import React from 'react';
 import { StyleSheet, Text, View, Animated, Easing, Dimensions, Image} from 'react-native';
 
+//get the assets
 const side = require('./assets/side.png')
 const car = require('./assets/car.png')
 const car1 = require('./assets/car1.png')
 const checkered = require('./assets/checkered.png')
   
-const countdownDim = 80; 
+const countdownDim = 80;
+//get device's window dimensions for positioning 
 const width = Dimensions.get('window').width;
 const height = Dimensions.get('window').height;
+
 const carWidth = 89;
 const carHeight = 189 
 
@@ -18,6 +21,7 @@ export default class App extends React.Component {
     super() 
   
     this.state = {
+      //animation values for countdown
       countdownAnimationValues: {
         one: new Animated.ValueXY(0,0),
         two: new Animated.ValueXY(0,0),
@@ -30,11 +34,11 @@ export default class App extends React.Component {
       /** CHANGE TO LEFT LANE */
       /** CHANGE TO RIGHT LANE */ 
       carAnimationValues: {
-        rotateZ: new Animated.Value(0),
-        rotateX: new Animated.Value(0),
-        scale: new Animated.Value(0),
-        moveX: new Animated.Value(0),
-        moveY: new Animated.Value(0),
+        //rotate and translate needs to be separate
+        //else react combines the transformation matrices
+        rotateZ: new Animated.Value(0), //rotation when changing lanes
+        moveX: new Animated.Value(0), //translation when changing lanes
+        //movement for the extra cars
         extraMoveY: new Animated.Value(0),
         extra2MoveY: new Animated.Value(0)
       },
@@ -42,23 +46,22 @@ export default class App extends React.Component {
       /** SIDE TRACK ANIM */
      
       sidetrackAnimationValues: {
-        start: new Animated.Value(0),
-        running: new Animated.Value(0),
-        stop: new Animated.Value(0)
+        running: new Animated.Value(0)
       },
 
+      //animated values for the messages at the end
       endAnimValues: {
         message1: new Animated.Value(0),
         message2: new Animated.Value(0),
         message3: new Animated.Value(0)
       },
 
+      //animated value for the finish line
       finishLineAnimValue: new Animated.Value(0) 
       
     } 
   
-    //countdown animation
-    
+    //set countdown animations
     this.countdownAnim = {
       threeIn: Animated.timing(this.state.countdownAnimationValues.one, {
         toValue: {x: 0, y:1},
@@ -108,6 +111,7 @@ export default class App extends React.Component {
  
     }   
 
+    //set side of the track animations
     this.sidetrackAnim = { 
       running: Animated.timing(this.state.sidetrackAnimationValues.running, {
         toValue: 1, 
@@ -116,6 +120,7 @@ export default class App extends React.Component {
       })    
     }   
 
+    //set up the car animations
     this.carAnimation = {
       rotateLeft: Animated.timing(this.state.carAnimationValues.rotateZ, {
         toValue: 1,
@@ -154,6 +159,7 @@ export default class App extends React.Component {
       }) 
     }   
 
+    //set up the end animations after finishing race
     this.endAnim = {
       showMessage1: Animated.timing(this.state.endAnimValues.message1, {
         toValue: 1,
@@ -190,8 +196,10 @@ export default class App extends React.Component {
     
   }      
  
+  //animation starts here
   startAnimation() {
 
+    //this is the countdown animation
     const countdownAnimations = [
       this.countdownAnim.threeIn, 
       Animated.parallel([ 
@@ -209,21 +217,25 @@ export default class App extends React.Component {
       ]),
       this.countdownAnim.goOut     
     ] 
- 
+    //after the sequence finishes, call the main animation which starts
+    //the side of the track animation and the cars and object animation
     Animated.sequence(countdownAnimations).start(()=>this.animateMain())  
   }
   
+
   animateMain() {
     this.animateTrack() 
     this.animateCarAndObjects()
   }
+
+  //put the side of the track animation on a loop
   animateTrack() {
     this.state.sidetrackAnimationValues.running.setValue(0);
     this.sidetrackAnim.running.start(()=>this.animateTrack())
   }
 
+  //animate the cars and other objects
   animateCarAndObjects() { 
-
     
     const createCarAnimation = (animType) => {
       if(animType==='moveLeft') {
@@ -248,6 +260,8 @@ export default class App extends React.Component {
       
     }
  
+    //this is the final seq. the ending message
+    //use this as the last sequence in animation
     const finalSeq = Animated.sequence([
       this.endAnim.showMessage1,
       this.endAnim.showMessage2,
@@ -258,7 +272,7 @@ export default class App extends React.Component {
       ])
     ]);
 
-
+    /** ANIMATION SEQ STARTS HERE */
     Animated.sequence([
       Animated.delay(5000),
       //first car drop, delay 2s then move to left
@@ -295,20 +309,20 @@ export default class App extends React.Component {
     this.startAnimation()    
   }       
  
+  //react native currently does not support repeat background
+  //this function just imitates that.
   createImageTile(tileCount, image) {
-    
+   
     const arr = [];
-
     for(var x = 0; x < tileCount ; x++) {
       arr.push(<Image source={image} key={x}></Image>)
     }
-
     return arr;
-
   }
 
   render() { 
  
+    //set up interpolation values for count down animation
     const countdownAnimInterp = { 
       threeY: this.state.countdownAnimationValues.one.y.interpolate({
         inputRange:   [0, 1], 
@@ -345,6 +359,7 @@ export default class App extends React.Component {
  
     } 
     
+    //interpolation for the side of the track
     const sidetrackAnimInterp = {
       slowStart: this.state.sidetrackAnimationValues.start.interpolate({
         inputRange:   [0, 1],
@@ -356,6 +371,7 @@ export default class App extends React.Component {
       }) 
     }  
 
+    //interpolation for car animations
     const carAnimInterp = {
       rotateZ: this.state.carAnimationValues.rotateZ.interpolate({
         inputRange:   [-1, 0, 1],
@@ -365,6 +381,7 @@ export default class App extends React.Component {
         inputRange:   [-1, 0, 1],
         outputRange:  [-width/6, 0, width/6]
       }),
+      //extra cars dropping
       drop: this.state.carAnimationValues.extraMoveY.interpolate({
         inputRange:   [-1,0],
         outputRange:  [height+carHeight, 0]
@@ -375,16 +392,19 @@ export default class App extends React.Component {
       })    
     } 
  
+    //interpolation for the finish line
     const finishLineInterp = this.state.finishLineAnimValue.interpolate({
       inputRange:     [-1, 0],
       outputRange:    [height+32, 0]
     })
 
+    //interpolation for the rotation of the message at the end of race
     const message3RotateInterp = this.state.endAnimValues.message3.interpolate({
       inputRange:     [0, 1],
       outputRange:    ['0deg', '720deg']
     })
    
+    //create a tiled background for finish line and side of the track
     const sidetrack = this.createImageTile(height/32 + 1, side);
     const finishLine = this.createImageTile(width/44 + 1, checkered) 
   
@@ -395,13 +415,13 @@ export default class App extends React.Component {
         <Animated.View style={[styles.finish, {transform: [{translateY: finishLineInterp}]}]}>
           {finishLine} 
         </Animated.View>   
+
         {/* Create the cars */}  
         <Animated.Image source={car} style={[styles.car, {bottom:50, transform: [{rotateZ: carAnimInterp.rotateZ}, {translateX: carAnimInterp.moveX} ]}]} /> 
         <Animated.Image source={car1} style={[styles.car, {top:-carHeight, transform: [{translateX: width/6}, {translateY: carAnimInterp.drop}]}]} /> 
         <Animated.Image source={car1} style={[styles.car, {top:-carHeight, transform: [{translateX: -width/6}, {translateY: carAnimInterp.drop2}]}]} /> 
    
         {/* Create the side of the track */}     
-  
         {/** LEFT SIDE */}  
         <Animated.View style={[styles.sidetrack, {left:0, transform: [{translateY: sidetrackAnimInterp.running}]}]}>   
           {sidetrack}        
