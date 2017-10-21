@@ -361,10 +361,6 @@ export default class App extends React.Component {
     
     //interpolation for the side of the track
     const sidetrackAnimInterp = {
-      slowStart: this.state.sidetrackAnimationValues.start.interpolate({
-        inputRange:   [0, 1],
-        outputRange:  [0, height] 
-      }),  
       running: this.state.sidetrackAnimationValues.running.interpolate({
         inputRange: [0, 1],
         outputRange: [0, height]
